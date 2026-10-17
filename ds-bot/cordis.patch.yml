@@ -7,6 +7,14 @@
     # results-page fallback (see README "Web search").
     - id: web-search-auto
       name: ds-bot/web-search
+    # Bundled upstream plugins: declared in package.json dependencies, so one
+    # install mounts IM channels and the context dashboard too (see README
+    # "Bundled IM and context"). Do not install them separately in the same
+    # profile: the duplicate row ids below would fail.
+    - id: xmanrui-dsh-im
+      name: '@xmanrui/dsh-im'
+    - id: dsh-context
+      name: dsh-context
 
 # A config override replaces the whole entry config, so fetchProvider is
 # restated. A profile patch that names another searchProvider (exa, perplexity,

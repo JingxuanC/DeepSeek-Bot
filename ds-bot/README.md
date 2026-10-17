@@ -102,6 +102,26 @@ marked in `state.json` as `teamTemplate`; an existing capability or Bot of the
 same name is reused rather than overwritten. A paid team can keep its JSON
 private: the public repository only needs to carry the shape.
 
+### Bundled IM and context (this fork)
+
+This fork mounts two upstream plugins along with the Bot team, so one install
+of `ds-bot` also gives you IM channels and the context dashboard:
+
+| Row id | Package | License |
+|---|---|---|
+| `xmanrui-dsh-im` | `@xmanrui/dsh-im` `^4.39.0` | MIT |
+| `dsh-context` | `dsh-context` `^0.71.0` | Apache-2.0 |
+
+Both are declared in `dependencies` and added to `cordis.patch.yml`, so they
+arrive with the bundle and stay upstream packages; nothing is copied here.
+
+Do not also install `@xmanrui/dsh-im` or `dsh-context` yourself in the same
+profile: each package ships its own `cordis.patch.yml` that inserts the same
+row id, so a separate install declares `xmanrui-dsh-im` or `dsh-context` twice
+and dsh refuses to load a profile with duplicate ids. Remove the separate
+install and let this bundle mount it. Their settings pages and panels then show
+up as usual; IM channels still need their own credentials.
+
 ## Models
 
 Model providers are set up with dsh's `llm-pi-ai` plugin in `cordis.patch.yml`. Every Bot runs on one model of its own, from the models DSH serves. A new team's first Main Bot has none: its chat opens on a model card and it greets the user only after a pick. The Create Bot form starts on the DSH default model. The Bot's details panel and settings (or a Main Bot's `update_bot`) change it; a Bot whose model is no longer served shows the card again. A team saved by an older version keeps the model each Bot last ran on.
