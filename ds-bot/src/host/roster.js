@@ -103,7 +103,7 @@ export function install(rt) {
     return holdName('bot', cleanName, () => buildBot(cleanName, options))
   }
 
-  async function buildBot(cleanName, { role = '', instructions = '', color, brief = '', createdBy, main = false, avatar, model, effort, workDir, copyOf, pickModel = false }) {
+  async function buildBot(cleanName, { role = '', instructions = '', color, brief = '', createdBy, main = false, avatar, model, effort, workDir, copyOf, pickModel = false, quiet = false }) {
     const cleanAvatarValue = cleanAvatar(avatar)
     // The model is fixed at creation, so a later change of the DSH default leaves it alone.
     const modelRef = model ? await rt.resolveModel(model) : pickModel ? undefined : await rt.defaultModel()
@@ -147,6 +147,18 @@ export function install(rt) {
       const opener = `${kickoff}\nWhere your instructions say otherwise, follow them.`
       const text = !main && language ? `${opener}\nWrite in ${language}.` : opener
       const bot = state.bots[id]
+      // A template Bot is made without a greeting: the user did not just create it,
+      // and a seeded team must not open N unsolicited chats. Its model is still
+      // applied, so the first real turn starts on the right one.
+      if (quiet) {
+        await rt.save()
+        if (modelRef !== undefined) {
+          void rt.waitForModel(bot)
+            .then(() => rt.applyModel(bot))
+            .catch(error => rt.warn('ds-bot: model for %s not applied: %s', cleanName, error))
+        }
+        return bot
+      }
       if (modelRef === undefined) {
         bot.kickoff = { text, from: createdBy ?? null, ...(main ? { main: true } : {}) }
         await rt.save()
@@ -582,12 +594,16 @@ export function install(rt) {
   async function bootstrap() {
     await rt.load()
     void rt.syncModels()
-    if (state.mainBotIds.some(id => rt.botOf(id))) return
+    if (state.mainBotIds.some(id => rt.botOf(id))) {
+      await rt.ensureTeamTemplate?.()
+      return
+    }
     // Only the team's first Main Bot is stored as the DeepSeek whale; other Bots get a
     // look from their id, and a Bot made Main Bot later keeps its own.
     bootstrapping ??= createBot({ name: defaults.mainName, role: defaults.mainRole, main: true, color: 'deepseek', avatar: { shape: 'whale' }, pickModel: true })
       .finally(() => { bootstrapping = null })
     await bootstrapping
+    await rt.ensureTeamTemplate?.()
   }
 
   Object.assign(rt, {
