@@ -3877,7 +3877,7 @@ async function loadSnapshot(code, period, signal) {
   if (body?.ok !== true) throw new Error(body?.message ?? `snapshot unavailable (${response.status})`);
   return body;
 }
-function MarketChartCell({ code, period }) {
+function MarketChartCell({ code, period, actions }) {
   const periodId = clean(period) || "day";
   const [state, setState] = (0, import_react6.useState)({ phase: "loading" });
   (0, import_react6.useEffect)(() => {
@@ -3915,7 +3915,13 @@ function MarketChartCell({ code, period }) {
       { style: { display: "flex", alignItems: "baseline", gap: "8px", minWidth: 0 } },
       (0, import_react6.createElement)("span", { style: { fontSize: "13px", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, snapshot?.name ?? clean(code)),
       (0, import_react6.createElement)("span", { style: { fontSize: "11px", color: faint, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" } }, snapshot?.code ?? clean(code)),
-      (0, import_react6.createElement)("span", { style: { marginLeft: "auto", fontSize: "11px", color: faint, whiteSpace: "nowrap" } }, PERIOD_LABELS[periodId] ?? periodId)
+      actions?.openPanel ? (0, import_react6.createElement)("button", {
+        type: "button",
+        onClick: () => actions.openPanel("market"),
+        title: "打开行情中心",
+        style: { marginLeft: "auto", border: 0, background: "transparent", color: "var(--dsw-alias-brand-primary, #4c7dff)", font: "inherit", fontSize: "11px", cursor: "pointer", padding: 0, whiteSpace: "nowrap" }
+      }, "行情中心") : null,
+      (0, import_react6.createElement)("span", { style: { marginLeft: actions?.openPanel ? "8px" : "auto", fontSize: "11px", color: faint, whiteSpace: "nowrap" } }, PERIOD_LABELS[periodId] ?? periodId)
     ),
     state.phase === "loading" ? (0, import_react6.createElement)("div", { style: { fontSize: "12px", color: muted } }, "Loading chart…") : state.phase === "error" ? (0, import_react6.createElement)("div", { style: { fontSize: "12px", color: muted }, title: state.message }, "Chart unavailable") : (0, import_react6.createElement)(
       "div",
@@ -4875,7 +4881,7 @@ function renderCall(call2, { sessionId, roster, actions, useUi, useWork, findBot
     case "forget":
       return done && !call2.isError ? (0, import_react8.createElement)(MemoryEvent, { sessionId, scope: arg("scope"), result: contentText(call2.content), roster, actions, findBot }) : null;
     case "market_chart":
-      return (0, import_react8.createElement)(MarketChartCell, { code: arg("code"), period: arg("period") });
+      return (0, import_react8.createElement)(MarketChartCell, { code: arg("code"), period: arg("period"), actions });
     case "market_insight":
       return (0, import_react8.createElement)(MarketInsightCell, { title: arg("title"), body: arg("body"), content: call2.content });
     default:
@@ -5879,6 +5885,17 @@ function MemoryNotice({ shown }) {
     (0, import_react11.createElement)("span", { className: "bt-pill-mem-in", ref: inner }, (0, import_react11.createElement)("span", { className: "bt-pill-mem-ico" }, (0, import_react11.createElement)(MemoryIcon)), label)
   );
 }
+var MarketIcon = () => (0, import_react11.createElement)("svg", {
+  width: 16,
+  height: 16,
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.8,
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+  "aria-hidden": true
+}, (0, import_react11.createElement)("path", { d: "M3 17l5-6 4 3 6-8 3 4" }), (0, import_react11.createElement)("path", { d: "M3 21h18" }));
 function HeaderPill({ sessionId, useRoster, useSessions, useSessionStatus, useSession, useActivity, useMemoryNews, useTurnClock, useUi, useLive, actions }) {
   const roster = useRoster((value) => value);
   const title = useSessions((list) => list.byId[sessionId]?.displayTitle ?? list.byId[sessionId]?.title ?? "");
@@ -5944,6 +5961,15 @@ function HeaderPill({ sessionId, useRoster, useSessions, useSessionStatus, useSe
     (0, import_react11.createElement)("span", { className: "bt-sr", role: "status" }, memoryNotice ? t("Memory updated") : ""),
     (0, import_react11.createElement)(NewMessagePills, { key: sessionId, sessionId, useSessions, useUi, useTurnClock }),
     (0, import_react11.createElement)(ActivityIndicator, { key: `activity:${sessionId}`, sessionId, useRoster, useSessionStatus, useSession, useLive, actions }),
+    // The market panel is a main panel owned by market-center; this is the in-chat
+    // way in, next to the other header controls.
+    actions.openPanel ? (0, import_react11.createElement)("button", {
+      type: "button",
+      className: "bt-icon-btn bt-head-side",
+      "aria-label": "行情中心",
+      title: "行情中心",
+      onClick: () => actions.openPanel("market")
+    }, (0, import_react11.createElement)(MarketIcon)) : null,
     // DSH's way into its right sidebar sits in the session header this pill replaces.
     actions.hasRightSidebar?.() ? (0, import_react11.createElement)("button", { type: "button", className: "bt-icon-btn bt-head-side", "data-bt-right-sidebar": "", "aria-label": t("Show or hide the right sidebar"), title: t("Right sidebar"), onClick: () => actions.toggleRightSidebar() }, (0, import_react11.createElement)(SidePanelIcon)) : null
   );
@@ -14046,6 +14072,12 @@ function apply(ctx) {
     return ids;
   };
   const actions = {
+    // Open a main panel owned by another plugin (market-center uses the `market` key).
+    // The full-pane overlays sit above the conversation, so dismiss them first.
+    openPanel: (panelId) => {
+      ui2.set((state) => state.newChat || state.exchange || state.menu || state.palette ? { ...state, newChat: null, exchange: null, menu: null, palette: null } : state);
+      ctx.layout.selectPanel(panelId);
+    },
     // The full-pane overlays sit above the conversation, so opening one must dismiss them
     // or the click appears to do nothing.
     isAgentSession: (id) => isAgentSessionId(id),

@@ -69,7 +69,7 @@ export async function loadSnapshot(code, period, signal) {
 
 // The chart tool's card: name, last price and change over a line sparkline. No canvas
 // and no chart library, so a transcript full of these costs one element tree each.
-export function MarketChartCell({ code, period }) {
+export function MarketChartCell({ code, period, actions }) {
   const periodId = clean(period) || 'day'
   const [state, setState] = useState({ phase: 'loading' })
   useEffect(() => {
@@ -97,7 +97,15 @@ export function MarketChartCell({ code, period }) {
     h('div', { style: { display: 'flex', alignItems: 'baseline', gap: '8px', minWidth: 0 } },
       h('span', { style: { fontSize: '13px', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, snapshot?.name ?? clean(code)),
       h('span', { style: { fontSize: '11px', color: faint, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' } }, snapshot?.code ?? clean(code)),
-      h('span', { style: { marginLeft: 'auto', fontSize: '11px', color: faint, whiteSpace: 'nowrap' } }, PERIOD_LABELS[periodId] ?? periodId)),
+      actions?.openPanel
+        ? h('button', {
+          type: 'button',
+          onClick: () => actions.openPanel('market'),
+          title: '打开行情中心',
+          style: { marginLeft: 'auto', border: 0, background: 'transparent', color: 'var(--dsw-alias-brand-primary, #4c7dff)', font: 'inherit', fontSize: '11px', cursor: 'pointer', padding: 0, whiteSpace: 'nowrap' },
+        }, '行情中心')
+        : null,
+      h('span', { style: { marginLeft: actions?.openPanel ? '8px' : 'auto', fontSize: '11px', color: faint, whiteSpace: 'nowrap' } }, PERIOD_LABELS[periodId] ?? periodId)),
     state.phase === 'loading' ? h('div', { style: { fontSize: '12px', color: muted } }, 'Loading chart…')
       : state.phase === 'error' ? h('div', { style: { fontSize: '12px', color: muted }, title: state.message }, 'Chart unavailable')
         : h('div', { style: { display: 'flex', flexDirection: 'column', gap: '2px' } },

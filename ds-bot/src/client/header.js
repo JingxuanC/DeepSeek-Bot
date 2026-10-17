@@ -42,6 +42,11 @@ function MemoryNotice({ shown }) {
     h('span', { className: 'bt-pill-mem-in', ref: inner }, h('span', { className: 'bt-pill-mem-ico' }, h(MemoryIcon)), label))
 }
 
+const MarketIcon = () => h('svg', {
+  width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor',
+  strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true,
+}, h('path', { d: 'M3 17l5-6 4 3 6-8 3 4' }), h('path', { d: 'M3 21h18' }))
+
 export function HeaderPill({ sessionId, useRoster, useSessions, useSessionStatus, useSession, useActivity, useMemoryNews, useTurnClock, useUi, useLive, actions }) {
   const roster = useRoster(value => value)
   const title = useSessions(list => list.byId[sessionId]?.displayTitle ?? list.byId[sessionId]?.title ?? '')
@@ -103,6 +108,14 @@ export function HeaderPill({ sessionId, useRoster, useSessions, useSessionStatus
     h('span', { className: 'bt-sr', role: 'status' }, memoryNotice ? t('Memory updated') : ''),
     h(NewMessagePills, { key: sessionId, sessionId, useSessions, useUi, useTurnClock }),
     h(ActivityIndicator, { key: `activity:${sessionId}`, sessionId, useRoster, useSessionStatus, useSession, useLive, actions }),
+    // The market panel is a main panel owned by market-center; this is the in-chat
+    // way in, next to the other header controls.
+    actions.openPanel
+      ? h('button', {
+        type: 'button', className: 'bt-icon-btn bt-head-side', 'aria-label': '行情中心', title: '行情中心',
+        onClick: () => actions.openPanel('market'),
+      }, h(MarketIcon))
+      : null,
     // DSH's way into its right sidebar sits in the session header this pill replaces.
     actions.hasRightSidebar?.()
       ? h('button', { type: 'button', className: 'bt-icon-btn bt-head-side', 'data-bt-right-sidebar': '', 'aria-label': t('Show or hide the right sidebar'), title: t('Right sidebar'), onClick: () => actions.toggleRightSidebar() }, h(SidePanelIcon))

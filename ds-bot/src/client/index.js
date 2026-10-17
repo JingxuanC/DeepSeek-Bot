@@ -340,6 +340,14 @@ export function apply(ctx) {
     return ids
   }
   const actions = {
+    // Open a main panel owned by another plugin (market-center uses the `market` key).
+    // The full-pane overlays sit above the conversation, so dismiss them first.
+    openPanel: (panelId) => {
+      ui.set(state => (state.newChat || state.exchange || state.menu || state.palette
+        ? { ...state, newChat: null, exchange: null, menu: null, palette: null }
+        : state))
+      ctx.layout.selectPanel(panelId)
+    },
     // The full-pane overlays sit above the conversation, so opening one must dismiss them
     // or the click appears to do nothing.
     isAgentSession: id => isAgentSessionId(id),

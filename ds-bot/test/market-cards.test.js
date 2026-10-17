@@ -111,6 +111,16 @@ test('a chart without a code renders its error state, and a loaded one its price
   assert.equal(find(down, node => node.type === 'polyline').props.stroke, '#30a46c')
 })
 
+test('the chart card offers the market panel and calls the layout action', () => {
+  const opened = []
+  slots = [{ phase: 'ready', snapshot: { name: 'A', code: 'sh600000', price: 10, changePercent: 1, bars: [{ close: 9 }, { close: 10 }] } }]
+  const card = render(MarketChartCell, { code: 'sh600000', period: 'day', actions: { openPanel: id => opened.push(id) } })
+  const button = find(card, node => node.type === 'button')
+  assert.ok(button !== undefined)
+  button.props.onClick()
+  assert.deepEqual(opened, ['market'])
+})
+
 test('an insight card shows the args it wrote, else the tool result text', () => {
   slots = []
   const written = render(MarketInsightCell, { title: '科技股拖累纳指跌 2.2%', body: 'A short brief.' })
