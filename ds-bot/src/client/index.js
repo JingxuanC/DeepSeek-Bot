@@ -350,6 +350,14 @@ export function apply(ctx) {
   const show = listedOpener({ list: ctx.sessions.list, refresh: () => Promise.resolve(ctx.sessions.refresh?.()).catch(quietly('refresh sessions')), open: (target) => { expected = target; ctx.uiWorkspace.openSession(target) }, current: mainView })
   const actions = {
     ...teamActions({ call, after, partFor, roster, ui, live, cards, heldCards, turnClock }),
+    // Open a main panel owned by another plugin (market-center uses the `market` key).
+    // The full-pane overlays sit above the conversation, so dismiss them first.
+    openPanel: (panelId) => {
+      ui.set(state => (state.newChat || state.exchange || state.menu || state.palette
+        ? { ...state, newChat: null, exchange: null, menu: null, palette: null }
+        : state))
+      ctx.layout.selectPanel(panelId)
+    },
     // The full-pane overlays sit above the conversation, so opening one must dismiss them
     // or the click appears to do nothing.
     isAgentSession: id => isAgentSessionId(id),

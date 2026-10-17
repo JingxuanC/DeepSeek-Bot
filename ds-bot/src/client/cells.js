@@ -882,7 +882,7 @@ function renderCall(call, { sessionId, roster, actions, useUi, useWork, findBot,
     case 'forget':
       return done && !call.isError ? h(MemoryEvent, { sessionId, scope: arg('scope'), result: contentText(call.content), roster, actions, findBot }) : null
     case 'market_chart':
-      return h(MarketChartCell, { code: arg('code'), period: arg('period') })
+      return h(MarketChartCell, { code: arg('code'), period: arg('period'), actions })
     case 'market_insight':
       return h(MarketInsightCell, { title: arg('title'), body: arg('body'), content: call.content })
     default:
