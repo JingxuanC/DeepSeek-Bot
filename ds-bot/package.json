@@ -47,6 +47,10 @@
     "harness": "npm install --prefix dev/harness --legacy-peer-deps=false --no-package-lock --no-fund --no-audit",
     "check": "sh dev/check.sh"
   },
+  "dependencies": {
+    "@xmanrui/dsh-im": "^4.39.0",
+    "dsh-context": "^0.71.0"
+  },
   "peerDependencies": {
     "@deepseek-ai/cordis": "*",
     "@deepseek-ai/dsh-llm": "*",
