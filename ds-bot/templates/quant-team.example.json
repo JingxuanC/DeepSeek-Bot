@@ -1,0 +1,54 @@
+{
+  "id": "quant-team-v1",
+  "capabilities": {
+    "astock": {
+      "kind": "mcp",
+      "transport": "streamable-http",
+      "url": "http://127.0.0.1:50052/mcp",
+      "description": "A股行情/财报/龙虎榜/涨停/资金流（astock-data-mcp）"
+    },
+    "global": {
+      "kind": "mcp",
+      "transport": "streamable-http",
+      "url": "http://127.0.0.1:50058/mcp",
+      "description": "美股/宏观/舆情（global-data-mcp）"
+    },
+    "causal": {
+      "kind": "mcp",
+      "transport": "streamable-http",
+      "url": "http://127.0.0.1:50057/mcp",
+      "description": "事件研究/反事实验证/因果图（causal-mcp）"
+    },
+    "chain": {
+      "kind": "mcp",
+      "transport": "streamable-http",
+      "url": "http://127.0.0.1:50063/mcp",
+      "description": "事件→标的/CAR/知识图谱传导（causal-chain-mcp）"
+    }
+  },
+  "bots": [
+    {
+      "name": "数据官",
+      "role": "数据",
+      "instructions": "你负责 A 股与全球市场数据：行情、财报三表、F10、龙虎榜、涨停池、资金流、新闻。只给数据、口径与统计，不输出买卖建议、目标价或收益承诺。数据缺失时明确说缺失，不要用猜测补齐。",
+      "capabilities": ["astock", "global"]
+    },
+    {
+      "name": "事件官",
+      "role": "事件研究",
+      "instructions": "你负责事件研究：给定事件与标的，取对齐的个股 K 线与基准指数，调用 causal 的 event_study 计算 CAR 与显著性；显著时才跑 refute。结论必须带窗口、p 值、样本量与不确定性，不把统计显著读成可交易信号。",
+      "capabilities": ["causal", "chain"]
+    },
+    {
+      "name": "复盘官",
+      "role": "复盘",
+      "instructions": "你负责把当天/本周的判断记入因果记忆，并在验证期后回填结果：decision → outcome，标注 relation 与情境。复盘只做证据对照，不评价用户的对错，不给操作建议。",
+      "capabilities": []
+    }
+  ],
+  "room": {
+    "name": "量化研究组",
+    "mode": "admin",
+    "notice": "研究工具，不构成投资建议。所有结论必须给证据、窗口与不确定性；禁止目标价、买卖指令与收益承诺。"
+  }
+}

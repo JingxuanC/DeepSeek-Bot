@@ -81,6 +81,27 @@ Options go in the profile's `cordis.patch.yml`, under the `bot` entry. All of th
 
 The same card can carry DSH itself: a DS Bot release may name the DSH release it was verified against (`dsBot.verifiedDsh` in its `package.json`), and only that version is offered — running something newer is a downgrade offer too. A release that names no version offers no DSH update. A DSH installed from npm is swapped by `npm install -g @deepseek-ai/dsh@<version>`. DSH Desktop installs the newest release its own updater finds, so the card shows DSH there only when that release is the verified one, and **Open updates** opens the app's update panel. A release may raise the floor with `dsBot.minBot`: until the bot itself is that new, the DSH row waits.
 
+### Team template (this fork)
+
+Seeds a whole team on the first start: Bots, their capabilities, and one group
+chat. Point `teamTemplate` at a JSON file; an example lives in
+`templates/quant-team.example.json`.
+
+```yaml
+- id: bot
+  name: ds-bot
+  config:
+    teamTemplate: /absolute/path/to/quant-team.json
+```
+
+A template is `{ id, capabilities, bots, room }`: `capabilities` are MCP servers
+or skills keyed by name (the name becomes the tool namespace, `mcp__<name>__…`),
+each Bot lists the capabilities to attach, and `room` creates the group. Seeded
+Bots are created without a greeting. The seed runs once per template id and is
+marked in `state.json` as `teamTemplate`; an existing capability or Bot of the
+same name is reused rather than overwritten. A paid team can keep its JSON
+private: the public repository only needs to carry the shape.
+
 ## Models
 
 Model providers are set up with dsh's `llm-pi-ai` plugin in `cordis.patch.yml`. Every Bot runs on one model of its own, from the models DSH serves. A new team's first Main Bot has none: its chat opens on a model card and it greets the user only after a pick. The Create Bot form starts on the DSH default model. The Bot's details panel and settings (or a Main Bot's `update_bot`) change it; a Bot whose model is no longer served shows the card again. A team saved by an older version keeps the model each Bot last ran on.
