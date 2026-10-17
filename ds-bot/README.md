@@ -81,26 +81,35 @@ Options go in the profile's `cordis.patch.yml`, under the `bot` entry. All of th
 
 The same card can carry DSH itself: a DS Bot release may name the DSH release it was verified against (`dsBot.verifiedDsh` in its `package.json`), and only that version is offered — running something newer is a downgrade offer too. A release that names no version offers no DSH update. A DSH installed from npm is swapped by `npm install -g @deepseek-ai/dsh@<version>`. DSH Desktop installs the newest release its own updater finds, so the card shows DSH there only when that release is the verified one, and **Open updates** opens the app's update panel. A release may raise the floor with `dsBot.minBot`: until the bot itself is that new, the DSH row waits.
 
-### Team template (this fork)
+### Team payload (this fork)
 
-Seeds a whole team on the first start: Bots, their capabilities, and one group
-chat. Point `teamTemplate` at a JSON file; an example lives in
-`templates/quant-team.example.json`.
+Seeds a whole team on the first start: Bots, capabilities, skills, starter
+memory, and one group chat. Point `teamBundle` at a directory:
 
 ```yaml
 - id: bot
   name: ds-bot
   config:
-    teamTemplate: /absolute/path/to/quant-team.json
+    teamBundle: /absolute/path/to/quant-team
 ```
 
-A template is `{ id, capabilities, bots, room }`: `capabilities` are MCP servers
-or skills keyed by name (the name becomes the tool namespace, `mcp__<name>__…`),
-each Bot lists the capabilities to attach, and `room` creates the group. Seeded
-Bots are created without a greeting. The seed runs once per template id and is
-marked in `state.json` as `teamTemplate`; an existing capability or Bot of the
-same name is reused rather than overwritten. A paid team can keep its JSON
-private: the public repository only needs to carry the shape.
+```
+quant-team/
+  team.json                      # { id, capabilities, bots, room }
+  skills/<name>/SKILL.md         # optional; registered as skill capabilities
+  memory/team/MEMORY.md          # optional; starter team memory
+  memory/bots/<key>/MEMORY.md    # optional; starter memory for one Bot key
+```
+
+`capabilities` are MCP servers keyed by name (the name becomes the tool
+namespace, `mcp__<name>__…`); each Bot lists the `capabilities` and `skills` to
+attach. Seeded Bots are created without a greeting. Starter memory is copied
+once and never overwritten unless `overwriteMemory: true`. The seed runs once
+per payload id and is marked in `state.json` as `teamTemplate`; an existing
+capability or Bot of the same name is reused. `teamTemplate` still accepts a
+single JSON file (the earlier shape); `teamBundle` adds skills and memory. A
+paid payload stays private: the public repository carries only the loader and
+an example.
 
 ### Bundled IM and context (this fork)
 

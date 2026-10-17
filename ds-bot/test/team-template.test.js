@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { test } from 'node:test'
@@ -18,7 +18,7 @@ const template = {
   room: { name: '量化研究组', mode: 'admin', notice: '研究工具，不构成投资建议。' },
 }
 
-const makeRuntime = () => {
+const makeRuntime = ({ home } = {}) => {
   const state = {
     version: 1,
     mainBotIds: ['chief'],
@@ -34,6 +34,7 @@ const makeRuntime = () => {
   const rt = {
     config: {},
     state,
+    home,
     warn: (...args) => calls.push(['warn', ...args]),
     async load() {},
     async save() { state.revision += 1 },
@@ -86,6 +87,47 @@ test('seeds capabilities, Bots and one group, then stops', async () => {
     assert.equal(calls.filter(([kind]) => kind === 'bot').length, 2)
     assert.equal(calls.filter(([kind]) => kind === 'capability').length, 2)
     assert.equal(calls.filter(([kind]) => kind === 'room').length, 1)
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+})
+
+test('a payload directory seeds skills, attaches them, and copies starter memory', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'dsb-team-'))
+  const payload = join(dir, 'payload')
+  const home = join(dir, 'home')
+  mkdirSync(join(payload, 'skills', 'demo'), { recursive: true })
+  mkdirSync(join(payload, 'memory', 'team'), { recursive: true })
+  mkdirSync(join(payload, 'memory', 'bots', '数据官'), { recursive: true })
+  writeFileSync(join(payload, 'team.json'), JSON.stringify({
+    id: 'payload-team',
+    capabilities: { astock: { kind: 'mcp', transport: 'streamable-http', url: 'http://127.0.0.1:50052/mcp' } },
+    bots: [{ name: '数据官', key: '数据官', capabilities: ['astock'], skills: ['demo'] }],
+  }))
+  writeFileSync(join(payload, 'skills', 'demo', 'SKILL.md'), [
+    '---',
+    'name: demo',
+    'description: Demo skill',
+    '---',
+    '',
+    'Use the demo steps.',
+    '',
+  ].join('\n'))
+  writeFileSync(join(payload, 'memory', 'team', 'MEMORY.md'), '# Team memory\n')
+  writeFileSync(join(payload, 'memory', 'bots', '数据官', 'MEMORY.md'), '# Data memory\n')
+  try {
+    const { rt, state } = makeRuntime({ home })
+    rt.config.teamBundle = payload
+    await rt.ensureTeamTemplate()
+
+    const skill = state.capabilities.items.demo
+    assert.equal(skill.kind, 'skill')
+    assert.equal(skill.description, 'Demo skill')
+    assert.equal(skill.content, 'Use the demo steps.')
+    assert.ok(state.bots['bot-1'].capabilities.includes('demo'))
+    assert.equal(readFileSync(join(home, 'memory', 'team', 'MEMORY.md'), 'utf8'), '# Team memory\n')
+    assert.equal(readFileSync(join(home, 'memory', 'bots', 'bot-1', 'MEMORY.md'), 'utf8'), '# Data memory\n')
+    assert.equal(state.teamTemplate.bundle, payload)
   } finally {
     rmSync(dir, { recursive: true, force: true })
   }
