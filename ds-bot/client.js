@@ -4842,8 +4842,8 @@ var SECRET_CSS = `
 var import_react8 = require("react");
 var SNAPSHOT_PATH = "/api/market-center/snapshot";
 var BARS = 120;
-var RISING = "#e5484d";
-var FALLING = "#30a46c";
+var RISING = "var(--bt-danger)";
+var FALLING = "var(--bt-green)";
 var SPARK = { width: 260, height: 56, pad: 3 };
 var PERIOD_LABELS = { day: "Day", week: "Week", month: "Month", "1min": "1m", "5min": "5m", "15min": "15m", "30min": "30m", "60min": "60m" };
 var card = {
@@ -4853,16 +4853,16 @@ var card = {
   margin: "0 auto 8px",
   padding: "10px 14px",
   borderRadius: "12px",
-  border: "1px solid var(--bt-line, rgba(127, 127, 127, .18))",
-  background: "var(--bt-card, var(--dsw-alias-bg-base, #fff))",
-  color: "var(--dsw-alias-label-primary, var(--bt-ink, #141414))",
+  border: "1px solid var(--bt-line)",
+  background: "var(--bt-card, var(--dsw-alias-bg-base))",
+  color: "var(--dsw-alias-label-primary, var(--bt-ink))",
   font: "inherit",
   display: "flex",
   flexDirection: "column",
   gap: "6px"
 };
-var muted = "var(--dsw-alias-label-secondary, var(--bt-ink-2, rgba(127, 127, 127, .8)))";
-var faint = "var(--dsw-alias-label-tertiary, var(--bt-ink-3, rgba(127, 127, 127, .6)))";
+var muted = "var(--dsw-alias-label-secondary, var(--bt-ink-2))";
+var faint = "var(--dsw-alias-label-tertiary, var(--bt-ink-3))";
 var clean = (value) => typeof value === "string" ? value.trim() : "";
 var priceText = (value) => Number.isFinite(value) && value > 0 ? value.toFixed(2) : "—";
 var percentText2 = (value) => Number.isFinite(value) ? `${value >= 0 ? "+" : ""}${value.toFixed(2)}%` : "—";
@@ -4929,7 +4929,7 @@ function MarketChartCell({ code, period, actions }) {
         type: "button",
         onClick: () => actions.openPanel("market"),
         title: "打开行情中心",
-        style: { marginLeft: "auto", border: 0, background: "transparent", color: "var(--dsw-alias-brand-primary, #4c7dff)", font: "inherit", fontSize: "11px", cursor: "pointer", padding: 0, whiteSpace: "nowrap" }
+        style: { marginLeft: "auto", border: 0, background: "transparent", color: "var(--dsw-alias-brand-primary, var(--bt-accent))", font: "inherit", fontSize: "11px", cursor: "pointer", padding: 0, whiteSpace: "nowrap" }
       }, "行情中心") : null,
       (0, import_react8.createElement)("span", { style: { marginLeft: actions?.openPanel ? "8px" : "auto", fontSize: "11px", color: faint, whiteSpace: "nowrap" } }, PERIOD_LABELS[periodId] ?? periodId)
     ),

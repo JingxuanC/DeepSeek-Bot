@@ -53,9 +53,9 @@ const plain = value => JSON.parse(JSON.stringify(value))
 test('the sparkline maps closes onto the viewBox and colours A-share up red, down green', () => {
   assert.equal(sparkline([]), null)
   assert.equal(sparkline([5]), null)
-  assert.deepEqual(plain(sparkline([1, 2, 3])), { points: '3.0,53.0 130.0,28.0 257.0,3.0', color: '#e5484d' })
-  assert.deepEqual(plain(sparkline([3, 2, 1])), { points: '3.0,3.0 130.0,28.0 257.0,53.0', color: '#30a46c' })
-  assert.deepEqual(plain(sparkline([1, Number.NaN, 3])), { points: '3.0,53.0 257.0,3.0', color: '#e5484d' })
+  assert.deepEqual(plain(sparkline([1, 2, 3])), { points: '3.0,53.0 130.0,28.0 257.0,3.0', color: 'var(--bt-danger)' })
+  assert.deepEqual(plain(sparkline([3, 2, 1])), { points: '3.0,3.0 130.0,28.0 257.0,53.0', color: 'var(--bt-green)' })
+  assert.deepEqual(plain(sparkline([1, Number.NaN, 3])), { points: '3.0,53.0 257.0,3.0', color: 'var(--bt-danger)' })
 })
 
 test('a snapshot is read from the market-center route with encoded arguments', async () => {
@@ -103,12 +103,12 @@ test('a chart without a code renders its error state, and a loaded one its price
   assert.match(text(up), /浦发银行/)
   assert.match(text(up), /sh600000/)
   assert.match(text(up), /Day.*10\.50.*\+2\.10%.*3 bars/)
-  assert.equal(find(up, node => node.type === 'polyline').props.stroke, '#e5484d')
+  assert.equal(find(up, node => node.type === 'polyline').props.stroke, 'var(--bt-danger)')
 
   slots = [{ phase: 'ready', snapshot: { name: 'A', code: 'sz000001', price: 9.5, changePercent: -1.2, bars: [{ close: 10 }, { close: 9.5 }] } }]
   const down = render(MarketChartCell, { code: 'sz000001', period: 'week' })
   assert.match(text(down), /Week.*9\.50.*-1\.20%.*2 bars/)
-  assert.equal(find(down, node => node.type === 'polyline').props.stroke, '#30a46c')
+  assert.equal(find(down, node => node.type === 'polyline').props.stroke, 'var(--bt-green)')
 })
 
 test('the chart card offers the market panel and calls the layout action', () => {

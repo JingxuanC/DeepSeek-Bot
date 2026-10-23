@@ -8,8 +8,8 @@ import { contentText } from './text.js'
 const SNAPSHOT_PATH = '/api/market-center/snapshot'
 const BARS = 120
 // A-share convention: red is up, green is down. Everything else follows the chat theme.
-const RISING = '#e5484d'
-const FALLING = '#30a46c'
+const RISING = 'var(--bt-danger)'
+const FALLING = 'var(--bt-green)'
 const SPARK = { width: 260, height: 56, pad: 3 }
 const PERIOD_LABELS = { day: 'Day', week: 'Week', month: 'Month', '1min': '1m', '5min': '5m', '15min': '15m', '30min': '30m', '60min': '60m' }
 
@@ -20,16 +20,16 @@ const card = {
   margin: '0 auto 8px',
   padding: '10px 14px',
   borderRadius: '12px',
-  border: '1px solid var(--bt-line, rgba(127, 127, 127, .18))',
-  background: 'var(--bt-card, var(--dsw-alias-bg-base, #fff))',
-  color: 'var(--dsw-alias-label-primary, var(--bt-ink, #141414))',
+  border: '1px solid var(--bt-line)',
+  background: 'var(--bt-card, var(--dsw-alias-bg-base))',
+  color: 'var(--dsw-alias-label-primary, var(--bt-ink))',
   font: 'inherit',
   display: 'flex',
   flexDirection: 'column',
   gap: '6px',
 }
-const muted = 'var(--dsw-alias-label-secondary, var(--bt-ink-2, rgba(127, 127, 127, .8)))'
-const faint = 'var(--dsw-alias-label-tertiary, var(--bt-ink-3, rgba(127, 127, 127, .6)))'
+const muted = 'var(--dsw-alias-label-secondary, var(--bt-ink-2))'
+const faint = 'var(--dsw-alias-label-tertiary, var(--bt-ink-3))'
 
 const clean = value => (typeof value === 'string' ? value.trim() : '')
 const priceText = value => (Number.isFinite(value) && value > 0 ? value.toFixed(2) : '—')
@@ -102,7 +102,7 @@ export function MarketChartCell({ code, period, actions }) {
           type: 'button',
           onClick: () => actions.openPanel('market'),
           title: '打开行情中心',
-          style: { marginLeft: 'auto', border: 0, background: 'transparent', color: 'var(--dsw-alias-brand-primary, #4c7dff)', font: 'inherit', fontSize: '11px', cursor: 'pointer', padding: 0, whiteSpace: 'nowrap' },
+          style: { marginLeft: 'auto', border: 0, background: 'transparent', color: 'var(--dsw-alias-brand-primary, var(--bt-accent))', font: 'inherit', fontSize: '11px', cursor: 'pointer', padding: 0, whiteSpace: 'nowrap' },
         }, '行情中心')
         : null,
       h('span', { style: { marginLeft: actions?.openPanel ? '8px' : 'auto', fontSize: '11px', color: faint, whiteSpace: 'nowrap' } }, PERIOD_LABELS[periodId] ?? periodId)),
