@@ -100,8 +100,8 @@ export function MarketChartCell({ code, period, actions }) {
       actions?.openPanel
         ? h('button', {
           type: 'button',
-          onClick: () => actions.openPanel('market'),
-          title: '打开行情中心',
+          onClick: () => (actions.openMarket ? actions.openMarket(code) : actions.openPanel('market')),
+          title: '打开行情抽屉',
           style: { marginLeft: 'auto', border: 0, background: 'transparent', color: 'var(--dsw-alias-brand-primary, var(--bt-accent))', font: 'inherit', fontSize: '11px', cursor: 'pointer', padding: 0, whiteSpace: 'nowrap' },
         }, '行情中心')
         : null,

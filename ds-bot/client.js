@@ -1669,8 +1669,8 @@ function MarketChartCell({ code, period, actions }) {
       (0, import_react2.createElement)("span", { style: { fontSize: "11px", color: faint, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" } }, snapshot?.code ?? clean(code)),
       actions?.openPanel ? (0, import_react2.createElement)("button", {
         type: "button",
-        onClick: () => actions.openPanel("market"),
-        title: "打开行情中心",
+        onClick: () => actions.openMarket ? actions.openMarket(code) : actions.openPanel("market"),
+        title: "打开行情抽屉",
         style: { marginLeft: "auto", border: 0, background: "transparent", color: "var(--dsw-alias-brand-primary, var(--bt-accent))", font: "inherit", fontSize: "11px", cursor: "pointer", padding: 0, whiteSpace: "nowrap" }
       }, "行情中心") : null,
       (0, import_react2.createElement)("span", { style: { marginLeft: actions?.openPanel ? "8px" : "auto", fontSize: "11px", color: faint, whiteSpace: "nowrap" } }, PERIOD_LABELS[periodId] ?? periodId)
@@ -7601,9 +7601,9 @@ function HeaderPill({ sessionId, useRoster, useSessions, useSessionStatus, useSe
     actions.openPanel ? (0, import_react14.createElement)("button", {
       type: "button",
       className: "bt-icon-btn bt-head-side",
-      "aria-label": "行情中心",
-      title: "行情中心",
-      onClick: () => actions.openPanel("market")
+      "aria-label": "行情抽屉",
+      title: "行情抽屉",
+      onClick: () => actions.openMarket ? actions.openMarket() : actions.openPanel("market")
     }, (0, import_react14.createElement)(MarketIcon)) : null,
     // DSH's way into its right sidebar sits in the session header this pill replaces.
     actions.hasRightSidebar?.() ? (0, import_react14.createElement)("button", { type: "button", className: "bt-icon-btn bt-head-side", "data-bt-right-sidebar": "", "aria-label": t("Show or hide the right sidebar"), title: t("Right sidebar"), onClick: () => actions.toggleRightSidebar() }, (0, import_react14.createElement)(SidePanelIcon)) : null
