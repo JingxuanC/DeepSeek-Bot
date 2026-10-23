@@ -8,8 +8,9 @@ import { colorOf, toolState, BotMark, RoomAvatar } from './mark.js'
 import { SettledQuestion, PendingQuestion } from './questions.js'
 import { AnsweredReply, WidgetCell } from './widget-cell.js'
 import { SecretToolCell } from './secret-card.js'
-import { t } from './i18n.js'
-import { call } from './api.js'
+import { MarketChartCell, MarketInsightCell } from './market-cards.js'
+import { dateLocale, t } from './i18n.js'
+import { call } from './api.js' 
 import { failureLabel } from './diagnostics.js'
 import { turnReasoning, thinkingStep } from './turn-reasoning.js'
 import { FOLD_AT, FOLD_HUGE, stripLongNote, useFold } from './fold.js'
@@ -775,7 +776,7 @@ function GroupReplies({ sessionId, callId, done, content, roster, actions, useUi
 
 // The calls ToolCell draws. A PTC program (`run_code`) dispatches the real tools as
 // its sub-calls, so a call draws by its own name wherever it sits in the tree.
-const DRAWN = new Set(['message_bot', 'stop_bot', 'create_bot', 'update_bot', 'group_relay', 'create_group', 'update_group', 'delete_group', 'post_to_group', 'ask_user', 'request_secret', 'ask_user_question', 'show_view', 'read_group_chat', 'remember', 'forget'])
+const DRAWN = new Set(['message_bot', 'stop_bot', 'create_bot', 'update_bot', 'group_relay', 'create_group', 'update_group', 'delete_group', 'post_to_group', 'ask_user', 'request_secret', 'ask_user_question', 'show_view', 'read_group_chat', 'remember', 'forget', 'market_chart', 'market_insight'])
 // Calls whose card a dock above the composer carries when the call is not drawn.
 const CARDS = new Set(['ask_user', 'request_secret', 'show_view'])
 
@@ -880,6 +881,10 @@ function renderCall(call, { sessionId, roster, actions, useUi, useWork, findBot,
     case 'remember':
     case 'forget':
       return done && !call.isError ? h(MemoryEvent, { sessionId, scope: arg('scope'), result: contentText(call.content), roster, actions, findBot }) : null
+    case 'market_chart':
+      return h(MarketChartCell, { code: arg('code'), period: arg('period') })
+    case 'market_insight':
+      return h(MarketInsightCell, { title: arg('title'), body: arg('body'), content: call.content })
     default:
       return null
   }
