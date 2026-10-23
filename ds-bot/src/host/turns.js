@@ -6,6 +6,7 @@ import { HANDOFF_ACK, MESSAGE_INLINE_MAX, REFERENCE_KIND, REPLY_KIND, SOURCE_KIN
 import { absoluteLinks } from './links.js'
 import { textOf } from './text.js'
 import { reminderText } from './schedules.js'
+import { createTurnWaiters } from './turn-wait.js'
 
 // A failed turn's `LlmFailure`, kept to what can be shown and logged. Like DSH's own
 // error row, an AUTH failure loses its message: providers may echo part of the key.
@@ -73,6 +74,12 @@ export function install(rt) {
 
   /** @type {Map<string, {turn?:number, pending?:any, info?:any, texts:string[], opened?:boolean, joined?:{info:any, from:number}[]}>} */
   const live = new Map()
+  const turnWait = createTurnWaiters()
+  rt.awaitNextTurn = (sessionId, timeoutMs = 120_000) => {
+    const skip = live.get(sessionId)?.turn !== undefined ? 1 : 0
+    return turnWait.awaitNext(sessionId, timeoutMs, { skip })
+  }
+  rt.cancelTurnWait = (sessionId) => turnWait.cancel(sessionId)
   /** @type {Map<string, {sessionId:string, resolve:(text:string|null)=>void, fail:(failure:any)=>void, touch:()=>void, approval:()=>void}>} member turn waiters keyed by exchange id */
   const roomWaiters = new Map()
   /** @type {Map<string, {roomId:string, replies:any[], members:string[], speaking:string|null}>} */
@@ -566,6 +573,16 @@ export function install(rt) {
           const reply = (wroteCall ? texts.map(stripWrittenCalls) : texts).join('\n\n').trim()
           return wroteCall && reply === '' ? 'Tried to run a tool but wrote the call as text, so it did not run.' : reply
         }
+        const errorKind = failure !== undefined
+          ? (failure.code || 'turn-error')
+          : reason?.kind === 'aborted' ? 'aborted' : null
+        turnWait.notify(id, {
+          ok: errorKind === null,
+          text: replyText() || '',
+          error_kind: errorKind,
+          reason: reason?.kind ?? null,
+          usage: null,
+        })
         const groupReply = () => rt.withRoomSteps?.(held, replyText()) ?? replyText()
         // Whoever the turn answers gets the same three-way rule: a failure notice,
         // the turn's text (or a stopped-before-answer line), or nothing.
