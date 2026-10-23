@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { questionReply } from './parts.js'
 import { COLORS, EXTRA_COLORS, ROUTE } from './constants.js'
+import { appendTrace, writeActiveTrace } from './trace.js'
 
 const LANGUAGES = { zh: 'Chinese (简体中文)', en: 'English' }
 
@@ -286,6 +287,86 @@ export function install(rt) {
           }
           await rt.save()
           return ok(true)
+        }
+        case 'ask': {
+          const text = String(body.text ?? '').trim()
+          const name = String(body.bot ?? '').trim()
+          if (text === '' || name === '') return fail('bot and text are required', 'bot/invalid')
+          if (typeof rt.awaitNextTurn !== 'function' || typeof rt.findBot !== 'function') {
+            return fail('named bot turns are unavailable', 'bot/unavailable')
+          }
+          await rt.load()
+          const bot = rt.findBot(name)
+          if (!bot) return fail(`no Bot named ${name}`, 'bot/not-found')
+          const asof = typeof body.asof === 'string' && body.asof.trim() !== '' ? body.asof.trim() : null
+          // Default a fresh own-chat so one eval case cannot read the previous case.
+          // No handoff note is copied: that note would carry the earlier prompt.
+          const wantFresh = body.fresh !== false
+          let sessionId = rt.chatOf(bot.id)
+          if (wantFresh) {
+            if (typeof rt.createSession !== 'function') return fail('fresh sessions are unavailable', 'bot/unavailable')
+            const previous = sessionId
+            sessionId = await rt.createSession(bot.name)
+            ;(bot.segments ??= []).push({ sessionId: previous, endedAt: Date.now(), reason: 'eval-case' })
+            bot.sessionId = sessionId
+            await rt.save()
+            if (typeof rt.applyModel === 'function') await rt.applyModel(bot, { force: true })
+          }
+          const traceId = typeof body.trace_id === 'string' && body.trace_id.trim() !== '' ? body.trace_id.trim() : randomUUID()
+          const requested = Number(body.timeoutMs)
+          const timeoutMs = Number.isFinite(requested) ? Math.max(1_000, Math.min(requested, 600_000)) : 120_000
+          const started = Date.now()
+          writeActiveTrace({ traceId, bot: bot.name, session: sessionId })
+          const waiter = rt.awaitNextTurn(sessionId, timeoutMs)
+          try {
+            await rt.ensureCapabilities(sessionId)
+            await ctx.sessionController.prompt({
+              requestId: randomUUID(),
+              sessionId,
+              mode: 'queue',
+              content: [{ type: 'text', text }],
+            }, AbortSignal.timeout(30_000))
+          } catch (error) {
+            waiter.cancel?.()
+            appendTrace({
+              trace_id: traceId,
+              bot: bot.name,
+              session: sessionId,
+              tool: 'ask',
+              latency_ms: Date.now() - started,
+              ok: false,
+              error_kind: 'prompt',
+              review_outcome: 'error',
+              asof,
+            })
+            throw error
+          }
+          const result = await waiter
+          const answered = typeof result.text === 'string' && result.text.trim() !== ''
+          const errorKind = result.error_kind ?? (answered ? null : 'empty')
+          appendTrace({
+            trace_id: traceId,
+            bot: bot.name,
+            session: sessionId,
+            tool: 'ask',
+            latency_ms: Date.now() - started,
+            ok: Boolean(result.ok) && answered,
+            error_kind: errorKind,
+            review_outcome: result.ok && answered ? 'ok' : 'error',
+            asof,
+          })
+          return ok({
+            trace_id: traceId,
+            bot: bot.name,
+            sessionId,
+            text: result.text ?? '',
+            ok: Boolean(result.ok) && answered,
+            error_kind: errorKind,
+            review_outcome: result.ok && answered ? 'ok' : 'error',
+            usage: result.usage ?? null,
+            asof,
+            fresh: wantFresh,
+          })
         }
         case 'send': {
           const text = String(body.text ?? '').trim()

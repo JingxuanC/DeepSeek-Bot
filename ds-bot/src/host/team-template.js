@@ -122,6 +122,15 @@ export function install(rt) {
           admin: chief.id,
           createdBy: chief.id,
         })
+      } else if (room !== undefined) {
+        // Re-seeding with a new payload id must bring the room up to date:
+        // a Bot added to team.json has to join the existing group, or it is
+        // invisible to the team it was added for.
+        const wanted = [chief.id, ...bots.map(bot => bot.id)]
+        const missing = wanted.filter(id => !room.members.includes(id))
+        if (missing.length > 0) {
+          room = await rt.updateRoom(room.id, { members: [...room.members, ...missing] }, chief.id)
+        }
       }
     }
 

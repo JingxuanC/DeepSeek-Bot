@@ -108,8 +108,8 @@ export function HeaderPill({ sessionId, useRoster, useSessions, useSessionStatus
     h('span', { className: 'bt-sr', role: 'status' }, memoryNotice ? t('Memory updated') : ''),
     h(NewMessagePills, { key: sessionId, sessionId, useSessions, useUi, useTurnClock }),
     h(ActivityIndicator, { key: `activity:${sessionId}`, sessionId, useRoster, useSessionStatus, useSession, useLive, actions }),
-    // The market panel is a main panel owned by market-center; this is the in-chat
-    // way in, next to the other header controls.
+    // The market drawer belongs to this page; the main `market` panel is still
+    // reachable from the drawer's own "打开完整行情中心" button.
     actions.openPanel
       ? h('button', {
         type: 'button', className: 'bt-icon-btn bt-head-side', 'aria-label': '行情中心', title: '行情中心',

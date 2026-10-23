@@ -8,10 +8,12 @@ export function freshBotName(roster, base = 'New Bot') {
   return `${base} ${index}`
 }
 
-// The form starts on the DSH default model when it is served, else the first one.
+// The form starts on the DSH default model when it is served. It stays empty
+// otherwise: silently picking the first provider entry can choose an API-key route
+// with no key configured, which only fails when the Bot first speaks.
 export function startModel(roster) {
   const models = roster.models ?? []
-  return (models.find(model => model.ref === roster.defaultModel) ?? models[0])?.ref ?? ''
+  return models.find(model => model.ref === roster.defaultModel)?.ref ?? ''
 }
 
 // The model is always sent: the host fixes it on the Bot at creation.

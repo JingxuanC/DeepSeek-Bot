@@ -8,6 +8,7 @@ import { SHELL_CSS, CONVERSATION_CSS, installStyles, installCompiledStyles } fro
 import { lookOf } from './mark.js'
 import { TeamSidebar, ConnectPlugins, YouAvatar, AccountLauncher, FooterAccount, BrandMark, BrandName, BotReturn, SIDEBAR_CSS, RETURN_CSS, holdShellShortcuts } from './sidebar.js'
 import { HeaderPill } from './header.js'
+import { MarketDrawer, openMarketDrawer } from './market-drawer.js'
 import { ComposerPlus, ComposerVoice, menuIcons } from './composer.js'
 import { CHATS_SOURCE, atSources } from './at-menu.js'
 import { VOICE_BUNDLE } from './speech.js'
@@ -342,12 +343,23 @@ export function apply(ctx) {
   const actions = {
     // Open a main panel owned by another plugin (market-center uses the `market` key).
     // The full-pane overlays sit above the conversation, so dismiss them first.
-    openPanel: (panelId) => {
+    // `code` carries the instrument a chart card was about; market-center listens
+    // for it so the panel opens on that instrument rather than its own default.
+    openPanel: (panelId, code) => {
       ui.set(state => (state.newChat || state.exchange || state.menu || state.palette
         ? { ...state, newChat: null, exchange: null, menu: null, palette: null }
         : state))
+      const carry = typeof code === 'string' && code.trim() !== '' ? code.trim() : null
+      const request = () => window.dispatchEvent(new CustomEvent('market-center:open', { detail: { code: carry } }))
+      if (carry !== null) request()
       ctx.layout.selectPanel(panelId)
+      // A main panel mounts on selection, so a closed panel has no listener for
+      // the event above; repeat it once the new mount's effect has attached.
+      if (carry !== null) setTimeout(request, 60)
     },
+    // A chart card or the conversation header opens the market drawer instead of
+    // the `market` main panel, so the conversation stays mounted behind it.
+    openMarket: (code) => { openMarketDrawer(code) },
     // The full-pane overlays sit above the conversation, so opening one must dismiss them
     // or the click appears to do nothing.
     isAgentSession: id => isAgentSessionId(id),

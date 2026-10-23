@@ -6,6 +6,7 @@ import { HANDOFF_ACK, MESSAGE_INLINE_MAX, REFERENCE_KIND, REPLY_KIND, SOURCE_KIN
 import { absoluteLinks } from './links.js'
 import { textOf } from './text.js'
 import { reminderText } from './schedules.js'
+import { createTurnWaiters } from './turn-wait.js'
 
 // A failed turn's `LlmFailure`, kept to what can be shown and logged. Like DSH's own
 // error row, an AUTH failure loses its message: providers may echo part of the key.
@@ -20,7 +21,11 @@ export function turnFailure(error) {
   }
 }
 
-export const failureLine = failure => `${failure.code}${failure.status ? ` ${failure.status}` : ''}${failure.message ? `: ${failure.message.slice(0, 200)}` : ''}`
+const credentialHint = 'its model route has no API key: open 设置 → 模型 (Models) to add one, or pick a model from a provider that is already configured'
+export const failureLine = failure => {
+  const line = `${failure.code}${failure.status ? ` ${failure.status}` : ''}${failure.message ? `: ${failure.message.slice(0, 200)}` : ''}`
+  return failure.code === 'MISSING_CREDENTIAL' ? `${line} — ${credentialHint}` : line
+}
 
 // A group's own Session never reaches a model, so the snapshot DSH prepared there
 // rides with the user's queued message to the members who answer it.
@@ -73,6 +78,14 @@ export function install(rt) {
 
   /** @type {Map<string, {turn?:number, pending?:any, info?:any, texts:string[], opened?:boolean, joined?:{info:any, from:number}[]}>} */
   const live = new Map()
+  const turnWait = createTurnWaiters()
+  // Registered before sessionController.prompt. A turn already in flight is skipped
+  // so the waiter resolves on the turn this call starts.
+  rt.awaitNextTurn = (sessionId, timeoutMs = 120_000) => {
+    const skip = live.get(sessionId)?.turn !== undefined ? 1 : 0
+    return turnWait.awaitNext(sessionId, timeoutMs, { skip })
+  }
+  rt.cancelTurnWait = (sessionId) => turnWait.cancel(sessionId)
   /** @type {Map<string, {sessionId:string, resolve:(text:string|null)=>void, fail:(failure:any)=>void, touch:()=>void, approval:()=>void}>} member turn waiters keyed by exchange id */
   const roomWaiters = new Map()
   /** @type {Map<string, {roomId:string, replies:any[], members:string[], speaking:string|null}>} */
@@ -390,6 +403,7 @@ export function install(rt) {
         entry.opened = false
         entry.joined = []
         entry.later = []
+        entry.usage = undefined
         if (entry.pending !== undefined) {
           claimTrigger(id, entry, entry.pending)
           entry.pending = undefined
@@ -495,6 +509,7 @@ export function install(rt) {
         }
         entry.lastText = text
         entry.lastCalled = called
+        if (event.data?.usage) entry.usage = event.data.usage
         entry.step = called && text !== HANDOFF_ACK ? stripWrittenCalls(text) || undefined : undefined
         break
       }
@@ -505,7 +520,7 @@ export function install(rt) {
         // What the group already saw of the turn is not posted again.
         const texts = entry.texts.slice(entry.shown)
         const shown = entry.shown > 0
-        const { lastText, lastCalled } = entry
+        const { lastText, lastCalled, usage } = entry
         // A turn stopped for a switch goes on in the next part, which answers instead.
         const switched = entry.switched === true
         entry.turn = undefined
@@ -520,6 +535,7 @@ export function install(rt) {
         entry.calls = undefined
         entry.lastText = undefined
         entry.lastCalled = undefined
+        entry.usage = undefined
         const later = entry.later ?? []
         entry.later = []
         for (const result of later) {
@@ -550,6 +566,20 @@ export function install(rt) {
         const replyText = () => {
           const reply = (wroteCall ? texts.map(stripWrittenCalls) : texts).join('\n\n').trim()
           return wroteCall && reply === '' ? 'Tried to run a tool but wrote the call as text, so it did not run.' : reply
+        }
+        // A written-as-text tool call gets one retry. Resolve named-bot waiters on the
+        // turn that actually finishes, not on that retry.
+        if (!retry) {
+          const errorKind = failure !== undefined
+            ? (failure.code || 'turn-error')
+            : reason?.kind === 'aborted' ? 'aborted' : null
+          turnWait.notify(id, {
+            ok: errorKind === null,
+            text: replyText() || '',
+            error_kind: errorKind,
+            reason: reason?.kind ?? null,
+            usage: usage ?? null,
+          })
         }
         const groupReply = () => rt.withRoomSteps?.(held, replyText()) ?? replyText()
         // Whoever the turn answers gets the same three-way rule: a failure notice,

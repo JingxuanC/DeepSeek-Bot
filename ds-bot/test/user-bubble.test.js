@@ -129,6 +129,7 @@ test('every danger color reads --bt-danger, which the base sheet sets once', () 
   assert.equal([...bundle.matchAll(/--bt-danger:#e02135/g)].length, 1)
   const allowed = before => before.endsWith('--bt-danger:') // the one value
     || before.endsWith('var(--bt-danger,') // feedback.js: its toast shows without the base sheet too
+    || before.endsWith('var(--bt-danger, ')
     || before.endsWith('.bt-voice-end:hover{background:') // recording reds: not decided yet
     || /FF3E51['"],\s*['"]$/i.test(before) // the red Bot color, not a danger color
   const loose = [...bundle.matchAll(/#e02135|#c21d2e/gi)]

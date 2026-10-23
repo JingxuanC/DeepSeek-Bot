@@ -199,6 +199,14 @@ export function ModelChoiceDock({ sessionId, useRoster, actions }) {
   if (!bot || currentPart(bot) !== sessionId || !roster.ready) return null
   const models = roster.models ?? []
   const lost = bot.model ? !models.some(model => model.ref === bot.model) : false
+  // The DSH default model's provider comes first: the first chip a user clicks should
+  // be the route the harness is already set up with, not an arbitrary provider entry.
+  const groups = groupModels(models)
+  groups.sort((a, b) => {
+    const aHas = a[1].some(model => model.ref === roster.defaultModel)
+    const bHas = b[1].some(model => model.ref === roster.defaultModel)
+    return aHas === bHas ? 0 : aHas ? -1 : 1
+  })
   // An unknown catalog (none listed) cannot tell a lost model from a slow provider.
   if (bot.model && (!lost || models.length === 0)) return null
   const pick = (ref) => {
@@ -217,7 +225,7 @@ export function ModelChoiceDock({ sessionId, useRoster, actions }) {
   const choices = models.length === 0
     ? setupChoices(actions).map(([label, run]) => h('button', { key: label, type: 'button', className: 'bt-model-chip', onClick: run }, label))
     : [
-        ...groupModels(models).map(([provider, list]) => h('div', { key: list[0].provider ?? provider, className: 'bt-model-choice-group', role: 'group', 'aria-label': provider },
+        ...groups.map(([provider, list]) => h('div', { key: list[0].provider ?? provider, className: 'bt-model-choice-group', role: 'group', 'aria-label': provider },
           h('div', { className: 'bt-model-choice-provider', 'aria-hidden': true }, provider),
           h('div', { className: 'bt-model-choice-chips' }, list.map(model => h('button', {
             key: model.ref, type: 'button', className: 'bt-model-chip', disabled: busy !== '', 'aria-busy': busy === model.ref || undefined,

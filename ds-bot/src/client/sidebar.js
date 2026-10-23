@@ -243,6 +243,19 @@ function useListGlide(listRef, layout, key) {
   }, [layout, key])
 }
 
+function ChartGlyph() {
+  return h('svg', { width: 16, height: 16, viewBox: '0 0 16 16', fill: 'none', 'aria-hidden': true },
+    h('path', { d: 'M2 13V9M6 13V5M10 13V7M14 13V3', stroke: 'currentColor', strokeWidth: 1.4, strokeLinecap: 'round' }))
+}
+
+function GridGlyph() {
+  return h('svg', { width: 16, height: 16, viewBox: '0 0 16 16', fill: 'none', 'aria-hidden': true },
+    h('rect', { x: 2, y: 2, width: 5, height: 5, rx: 1, stroke: 'currentColor', strokeWidth: 1.2 }),
+    h('rect', { x: 9, y: 2, width: 5, height: 5, rx: 1, stroke: 'currentColor', strokeWidth: 1.2 }),
+    h('rect', { x: 2, y: 9, width: 5, height: 5, rx: 1, stroke: 'currentColor', strokeWidth: 1.2 }),
+    h('rect', { x: 9, y: 9, width: 5, height: 5, rx: 1, stroke: 'currentColor', strokeWidth: 1.2 }))
+}
+
 export function TeamSidebar(props) {
   const { wide, useRoster, useUi, useSessions, actions } = props
   const listRef = useRef(null)
@@ -281,10 +294,14 @@ export function TeamSidebar(props) {
       h(UpdateButton, { useUpdate: props.useUpdate, actions }),
       h('button', { type: 'button', className: 'bt-round', 'aria-label': t('Search'), title: t('Search'), onClick: () => actions.openPalette() }, h(SearchIcon)),
       h('button', { type: 'button', className: 'bt-round', 'aria-label': t('New…'), title: t('New…'), onClick: () => actions.openNewChat('new') }, h(PlusIcon)),
+      h('button', { type: 'button', className: 'bt-round', 'aria-label': '行情中心', title: '行情中心', onClick: () => actions.selectPanel('market') }, h(ChartGlyph)),
+      h('button', { type: 'button', className: 'bt-round', 'aria-label': '仪表盘', title: '仪表盘', onClick: () => actions.selectPanel('dashboard') }, h(GridGlyph)),
       h('button', { type: 'button', className: 'bt-round bt-side-collapse', 'aria-label': t('Collapse sidebar'), title: t('Collapse sidebar'), onClick: () => actions.toggleSidebar() }, h(SidebarIcon)))
       : h(Fragment, null,
           h(UpdateButton, { useUpdate: props.useUpdate, actions }),
-          h('button', { type: 'button', className: 'bt-round', 'aria-label': t('New…'), title: t('New…'), onClick: () => actions.openNewChat('new') }, h(PlusIcon))),
+          h('button', { type: 'button', className: 'bt-round', 'aria-label': t('New…'), title: t('New…'), onClick: () => actions.openNewChat('new') }, h(PlusIcon)),
+          h('button', { type: 'button', className: 'bt-round', 'aria-label': '行情中心', title: '行情中心', onClick: () => actions.selectPanel('market') }, h(ChartGlyph)),
+          h('button', { type: 'button', className: 'bt-round', 'aria-label': '仪表盘', title: '仪表盘', onClick: () => actions.selectPanel('dashboard') }, h(GridGlyph))),
     wide && roster.readOnly ? h('div', { className: 'bt-hint bt-read-only', role: 'status' }, hostText(roster.readOnly)) : null,
     h('div', { ref: listRef, className: 'bt-list', role: 'region', 'aria-label': t('Bot list') },
       main ? h(BotRow, { ...rowProps, bot: main, marked: markedUnread[main.id] === true }) : roster.ready ? null : h('div', { className: 'bt-hint' }, t('Setting up your Main Bot…')),
@@ -521,8 +538,10 @@ export function AccountLauncher({ seat = true, settingsOpen, openSettings, openO
     [
       [t('Usage'), GaugeIcon, () => actions.openSettings('usage')],
       [t('Connectors'), ConnectorIcon, () => actions.openConnectors()],
+      [t('IM bots'), ConnectorIcon, () => actions.selectPanel('xmanrui-dsh-im')],
       [t('Automation tasks'), ClockIcon, () => actions.selectPanel('schedules')],
       [t('Bot settings'), GearIcon, () => actions.openSettings('general')],
+      [t('Harness settings'), SidebarIcon, () => openHarnessSettings()],
     ],
     [
       [t('Switch to classic Agent mode'), SwitchIcon, () => actions.setSurface('agent')],

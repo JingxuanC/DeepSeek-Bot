@@ -784,6 +784,7 @@ const ZH = {
   'Add at least one more Bot': '再至少添加一个 Bot',
   Members: '成员',
   // Connectors and scheduled tasks
+  'IM bots': 'IM 机器人',
   'Scheduled tasks': '定时任务',
   'Every day': '每天',
   'Every {count} days': '每 {count} 天',

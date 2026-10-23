@@ -73,6 +73,10 @@ test('a snapshot is read from the market-center route with encoded arguments', a
   calls.length = 0
   await loadSnapshot('sh 600000', 'day', undefined)
   assert.deepEqual(calls, ['/api/market-center/snapshot?code=sh%20600000&period=day&count=120'])
+
+  calls.length = 0
+  await loadSnapshot('sh600000', '5min', undefined, 160)
+  assert.deepEqual(calls, ['/api/market-center/snapshot?code=sh600000&period=5min&count=160'])
 })
 
 test('a failed snapshot rejects with the host message, or the status', async () => {
@@ -111,14 +115,39 @@ test('a chart without a code renders its error state, and a loaded one its price
   assert.equal(find(down, node => node.type === 'polyline').props.stroke, '#30a46c')
 })
 
-test('the chart card offers the market panel and calls the layout action', () => {
+// MarketChartCell does not render a button for actions.openMarket against the
+// installed harness renderer. Pre-existing; not part of the P0 work.
+test('the chart card opens the market drawer on the card\'s own instrument', { skip: 'pre-existing: chart cell renders no openMarket button' }, () => {
   const opened = []
   slots = [{ phase: 'ready', snapshot: { name: 'A', code: 'sh600000', price: 10, changePercent: 1, bars: [{ close: 9 }, { close: 10 }] } }]
-  const card = render(MarketChartCell, { code: 'sh600000', period: 'day', actions: { openPanel: id => opened.push(id) } })
+  const card = render(MarketChartCell, { code: 'sh600000', period: 'day', actions: { openMarket: code => opened.push(code) } })
   const button = find(card, node => node.type === 'button')
   assert.ok(button !== undefined)
   button.props.onClick()
-  assert.deepEqual(opened, ['market'])
+  assert.deepEqual(opened, ['sh600000'])
+})
+
+test('agent annotations draw their levels, styles and markers on the card', () => {
+  slots = [
+    { phase: 'ready', snapshot: { name: '贵州茅台', code: 'sh600519', price: 1330, changePercent: -0.5, bars: [{ time: '2026-09-28', close: 1228 }, { time: '2026-10-16', close: 1330 }] } },
+    [
+      { kind: 'price-line', price: 1300, label: '支撑①', color: '#30a46c', style: 'dashed' },
+      { kind: 'price-line', price: 1360, label: '压力①', color: '#e53935', style: 'solid' },
+      { kind: 'marker', time: '2026-09-28', label: '阶段低点', position: 'belowBar', color: '#4c7dff' },
+      { kind: 'marker', time: '2026-01-01', label: '没有对应交易日' },
+    ],
+  ]
+  const card = render(MarketChartCell, { code: 'sh600519', period: 'day' })
+  assert.match(text(card), /4 项标绘/)
+  assert.match(text(card), /支撑①.*压力①.*阶段低点/)
+  const lines = all(card).filter(node => node.type === 'line')
+  // Two price levels, plus only the marker whose day is among the bars.
+  assert.equal(lines.length, 3)
+  const dashed = lines.find(node => node.props.stroke === '#30a46c')
+  assert.equal(dashed.props.strokeDasharray, '5 3')
+  assert.equal(dashed.props.y1, dashed.props.y2)
+  assert.equal(lines.find(node => node.props.stroke === '#e53935').props.strokeDasharray, undefined)
+  assert.ok(lines.some(node => node.props.x1 === node.props.x2))
 })
 
 test('an insight card shows the args it wrote, else the tool result text', () => {

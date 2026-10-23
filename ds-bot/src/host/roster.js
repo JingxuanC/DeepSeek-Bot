@@ -581,8 +581,11 @@ export function install(rt) {
       return
     }
     // Only the team's first Main Bot is stored as the DeepSeek whale; other Bots get a
-    // look from their id, and a Bot made Main Bot later keeps its own.
-    bootstrapping ??= createBot({ name: defaults.mainName, role: defaults.mainRole, main: true, color: 'deepseek', avatar: { shape: 'whale' }, pickModel: true })
+    // look from their id, and a Bot made Main Bot later keeps its own. It starts on the
+    // DSH default model when one is served, so the first chat does not fall back to an
+    // arbitrary provider list entry (often an API-key route with no key configured).
+    const fallbackModel = await rt.defaultModel().catch(() => undefined)
+    bootstrapping ??= createBot({ name: defaults.mainName, role: defaults.mainRole, main: true, color: 'deepseek', avatar: { shape: 'whale' }, ...(fallbackModel ? { model: fallbackModel } : { pickModel: true }) })
       .finally(() => { bootstrapping = null })
     await bootstrapping
     await rt.ensureTeamTemplate?.()
