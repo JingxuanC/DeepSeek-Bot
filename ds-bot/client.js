@@ -1669,11 +1669,17 @@ function MarketChartCell({ code, period, actions }) {
       (0, import_react2.createElement)("span", { style: { fontSize: "11px", color: faint, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" } }, snapshot?.code ?? clean(code)),
       actions?.openPanel ? (0, import_react2.createElement)("button", {
         type: "button",
-        onClick: () => actions.openMarket ? actions.openMarket(code) : actions.openPanel("market"),
-        title: "打开行情抽屉",
+        onClick: () => actions.openPanel("market", code),
+        title: "打开行情中心",
         style: { marginLeft: "auto", border: 0, background: "transparent", color: "var(--dsw-alias-brand-primary, var(--bt-accent))", font: "inherit", fontSize: "11px", cursor: "pointer", padding: 0, whiteSpace: "nowrap" }
       }, "行情中心") : null,
-      (0, import_react2.createElement)("span", { style: { marginLeft: actions?.openPanel ? "8px" : "auto", fontSize: "11px", color: faint, whiteSpace: "nowrap" } }, PERIOD_LABELS[periodId] ?? periodId)
+      actions?.openMarket ? (0, import_react2.createElement)("button", {
+        type: "button",
+        onClick: () => actions.openMarket(code),
+        title: "在右侧打开行情抽屉",
+        style: { marginLeft: "8px", border: 0, background: "transparent", color: faint, font: "inherit", fontSize: "11px", cursor: "pointer", padding: 0, whiteSpace: "nowrap" }
+      }, "抽屉") : null,
+      (0, import_react2.createElement)("span", { style: { marginLeft: "8px", fontSize: "11px", color: faint, whiteSpace: "nowrap" } }, PERIOD_LABELS[periodId] ?? periodId)
     ),
     state.phase === "loading" ? (0, import_react2.createElement)("div", { style: { fontSize: "12px", color: muted } }, "Loading chart…") : state.phase === "error" ? (0, import_react2.createElement)("div", { style: { fontSize: "12px", color: muted }, title: state.message }, "Chart unavailable") : (0, import_react2.createElement)(
       "div",
@@ -3097,6 +3103,10 @@ body[data-bt-motion=quiet] .bt-mark[data-poke]{cursor:default}
 
 .bt-side{display:flex;flex-direction:column;min-height:0;flex:1 1 auto;gap:2px;padding:0 12px 8px 0;color:var(--bt-ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
 .bt-side-top{display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:6px 5px 0 0}
+.bt-panelbar{display:flex;align-items:center;gap:3px;padding:6px 5px 0}
+.bt-panelbtn{width:28px;height:28px;flex:none;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:6px;background:transparent;color:var(--bt-ink-2);cursor:pointer}
+.bt-panelbtn:hover{background:var(--bt-hover);color:var(--bt-ink)}
+
 .bt-brand{display:inline-flex;align-items:center;gap:6px;margin-right:auto;padding:4px 8px 4px 4px;border:0;border-radius:8px;background:none;cursor:pointer;font-family:inherit;font-size:15px;line-height:20px;font-weight:600;letter-spacing:-.01em;color:var(--bt-ink);white-space:nowrap}
 .bt-brand-whale{display:inline-flex;color:var(--bt-accent)}
 .bt-round{width:36px;height:36px;border-radius:50%;border:1px solid var(--bt-line);background:var(--bt-main);color:var(--bt-ink);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:background-color .12s ease,transform .12s ease}
@@ -3495,7 +3505,7 @@ button.bt-set-row:hover{background:var(--bt-hover)}
 
 /* Shell chrome reshaped for the team view. Selectors use stable data attributes where the
    shell offers them and CSS-module name suffixes elsewhere. */
-[class*="_newSession"],[class*="_logoRow"]>[class*="_brand"],[class*="_logoRow"]:not(:has([class*="_toggle"])){display:none!important}
+[class*="_newSession"],nav[class*="_panelList"],[class*="_logoRow"]>[class*="_brand"],[class*="_logoRow"]:not(:has([class*="_toggle"])){display:none!important}
 /* The shell's sidebar switch stays where the shell puts it whenever the sidebar is
    collapsed: on the rail, or fixed in a Windows title bar, where it also stays while
    the sidebar is open. Elsewhere an open sidebar uses the team's own top row. */
@@ -7087,6 +7097,7 @@ function TeamSidebar(props) {
       (0, import_react13.createElement)(UpdateButton, { useUpdate: props.useUpdate, actions }),
       (0, import_react13.createElement)("button", { type: "button", className: "bt-round", "aria-label": t("New…"), title: t("New…"), onClick: () => actions.openNewChat("new") }, (0, import_react13.createElement)(PlusIcon))
     ),
+    wide ? (0, import_react13.createElement)(PanelBar, { actions }) : null,
     wide && roster.readOnly ? (0, import_react13.createElement)("div", { className: "bt-hint bt-read-only", role: "status" }, hostText(roster.readOnly)) : null,
     (0, import_react13.createElement)(
       "div",
@@ -7094,6 +7105,28 @@ function TeamSidebar(props) {
       main ? (0, import_react13.createElement)(BotRow, { ...rowProps, bot: main, marked: markedUnread[main.id] === true }) : roster.ready ? null : (0, import_react13.createElement)("div", { className: "bt-hint" }, t("Setting up your Main Bot…")),
       order.map((entry) => entry.kind === "bot" ? (0, import_react13.createElement)(BotRow, { key: entry.item.id, ...rowProps, bot: entry.item, marked: markedUnread[entry.item.id] === true }) : entry.kind === "room" ? (0, import_react13.createElement)(RoomRow, { key: entry.item.id, ...rowProps, room: entry.item, marked: markedUnread[entry.item.id] === true }) : (0, import_react13.createElement)(AgentRow, { key: entry.item.id, ...rowProps, agent: entry.item, marked: markedUnread[entry.item.id] === true }))
     )
+  );
+}
+var PANEL_ITEMS = [
+  { id: "market", label: "行情中心", path: "M3 15l4-5 3 2 5-7" },
+  { id: "dashboard", label: "仪表盘", path: "M3 3h5v5H3zM10 3h5v5h-5zM3 10h5v5H3zM10 10h5v5h-5z" },
+  { id: "trust-center", label: "信任中心", path: "M10 2.5l6 2.2v5c0 3.5-2.5 5.6-6 6.8-3.5-1.2-6-3.3-6-6.8v-5zM7 10l2 2 4-4" },
+  { id: "evolution", label: "团队进化", path: "M3 15h3V10h3V6h3V3h3M14 5l2-2 2 2" },
+  { id: "knowledge-base", label: "知识库", path: "M4 3.5h8A1.5 1.5 0 0 1 13.5 5v12H5.5A1.5 1.5 0 0 1 4 15.5zM6 7h5M6 10h5" }
+];
+function PanelBar({ actions }) {
+  if (typeof actions.openPanel !== "function") return null;
+  return (0, import_react13.createElement)(
+    "div",
+    { className: "bt-panelbar", role: "toolbar", "aria-label": "产品面板" },
+    PANEL_ITEMS.map((item) => (0, import_react13.createElement)("button", {
+      key: item.id,
+      type: "button",
+      className: "bt-panelbtn",
+      title: item.label,
+      "aria-label": item.label,
+      onClick: () => actions.openPanel(item.id)
+    }, (0, import_react13.createElement)("svg", { width: 15, height: 15, viewBox: "0 0 20 20", fill: "none", stroke: "currentColor", strokeWidth: 1.6, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true }, (0, import_react13.createElement)("path", { d: item.path }))))
   );
 }
 function UpdateButton({ useUpdate, actions }) {
@@ -7601,9 +7634,9 @@ function HeaderPill({ sessionId, useRoster, useSessions, useSessionStatus, useSe
     actions.openPanel ? (0, import_react14.createElement)("button", {
       type: "button",
       className: "bt-icon-btn bt-head-side",
-      "aria-label": "行情抽屉",
-      title: "行情抽屉",
-      onClick: () => actions.openMarket ? actions.openMarket() : actions.openPanel("market")
+      "aria-label": "行情中心",
+      title: "行情中心",
+      onClick: () => actions.openPanel("market")
     }, (0, import_react14.createElement)(MarketIcon)) : null,
     // DSH's way into its right sidebar sits in the session header this pill replaces.
     actions.hasRightSidebar?.() ? (0, import_react14.createElement)("button", { type: "button", className: "bt-icon-btn bt-head-side", "data-bt-right-sidebar": "", "aria-label": t("Show or hide the right sidebar"), title: t("Right sidebar"), onClick: () => actions.toggleRightSidebar() }, (0, import_react14.createElement)(SidePanelIcon)) : null

@@ -306,6 +306,7 @@ export function TeamSidebar(props) {
       : h(Fragment, null,
           h(UpdateButton, { useUpdate: props.useUpdate, actions }),
           h('button', { type: 'button', className: 'bt-round', 'aria-label': t('New…'), title: t('New…'), onClick: () => actions.openNewChat('new') }, h(PlusIcon))),
+    wide ? h(PanelBar, { actions }) : null,
     wide && roster.readOnly ? h('div', { className: 'bt-hint bt-read-only', role: 'status' }, hostText(roster.readOnly)) : null,
     h('div', { ref: listRef, className: 'bt-list', role: 'region', 'aria-label': t('Bot list') },
       main ? h(BotRow, { ...rowProps, bot: main, marked: markedUnread[main.id] === true }) : roster.ready ? null : h('div', { className: 'bt-hint' }, t('Setting up your Main Bot…')),
@@ -314,6 +315,23 @@ export function TeamSidebar(props) {
         : entry.kind === 'room'
           ? h(RoomRow, { key: entry.item.id, ...rowProps, room: entry.item, marked: markedUnread[entry.item.id] === true })
           : h(AgentRow, { key: entry.item.id, ...rowProps, agent: entry.item, marked: markedUnread[entry.item.id] === true })))))
+}
+
+const PANEL_ITEMS = [
+  { id: 'market', label: '行情中心', path: 'M3 15l4-5 3 2 5-7' },
+  { id: 'dashboard', label: '仪表盘', path: 'M3 3h5v5H3zM10 3h5v5h-5zM3 10h5v5H3zM10 10h5v5h-5z' },
+  { id: 'trust-center', label: '信任中心', path: 'M10 2.5l6 2.2v5c0 3.5-2.5 5.6-6 6.8-3.5-1.2-6-3.3-6-6.8v-5zM7 10l2 2 4-4' },
+  { id: 'evolution', label: '团队进化', path: 'M3 15h3V10h3V6h3V3h3M14 5l2-2 2 2' },
+  { id: 'knowledge-base', label: '知识库', path: 'M4 3.5h8A1.5 1.5 0 0 1 13.5 5v12H5.5A1.5 1.5 0 0 1 4 15.5zM6 7h5M6 10h5' },
+]
+
+function PanelBar({ actions }) {
+  if (typeof actions.openPanel !== 'function') return null
+  return h('div', { className: 'bt-panelbar', role: 'toolbar', 'aria-label': '产品面板' },
+    PANEL_ITEMS.map(item => h('button', {
+      key: item.id, type: 'button', className: 'bt-panelbtn', title: item.label, 'aria-label': item.label,
+      onClick: () => actions.openPanel(item.id),
+    }, h('svg', { width: 15, height: 15, viewBox: '0 0 20 20', fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true }, h('path', { d: item.path })))))
 }
 
 // The update button at the sidebar's top right: a cloud while a newer DS Bot —

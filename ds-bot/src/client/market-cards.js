@@ -100,12 +100,20 @@ export function MarketChartCell({ code, period, actions }) {
       actions?.openPanel
         ? h('button', {
           type: 'button',
-          onClick: () => (actions.openMarket ? actions.openMarket(code) : actions.openPanel('market')),
-          title: '打开行情抽屉',
+          onClick: () => actions.openPanel('market', code),
+          title: '打开行情中心',
           style: { marginLeft: 'auto', border: 0, background: 'transparent', color: 'var(--dsw-alias-brand-primary, var(--bt-accent))', font: 'inherit', fontSize: '11px', cursor: 'pointer', padding: 0, whiteSpace: 'nowrap' },
         }, '行情中心')
         : null,
-      h('span', { style: { marginLeft: actions?.openPanel ? '8px' : 'auto', fontSize: '11px', color: faint, whiteSpace: 'nowrap' } }, PERIOD_LABELS[periodId] ?? periodId)),
+      actions?.openMarket
+        ? h('button', {
+          type: 'button',
+          onClick: () => actions.openMarket(code),
+          title: '在右侧打开行情抽屉',
+          style: { marginLeft: '8px', border: 0, background: 'transparent', color: faint, font: 'inherit', fontSize: '11px', cursor: 'pointer', padding: 0, whiteSpace: 'nowrap' },
+        }, '抽屉')
+        : null,
+      h('span', { style: { marginLeft: '8px', fontSize: '11px', color: faint, whiteSpace: 'nowrap' } }, PERIOD_LABELS[periodId] ?? periodId)),
     state.phase === 'loading' ? h('div', { style: { fontSize: '12px', color: muted } }, 'Loading chart…')
       : state.phase === 'error' ? h('div', { style: { fontSize: '12px', color: muted }, title: state.message }, 'Chart unavailable')
         : h('div', { style: { display: 'flex', flexDirection: 'column', gap: '2px' } },

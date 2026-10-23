@@ -116,8 +116,8 @@ export function HeaderPill({ sessionId, useRoster, useSessions, useSessionStatus
     // way in, next to the other header controls.
     actions.openPanel
       ? h('button', {
-        type: 'button', className: 'bt-icon-btn bt-head-side', 'aria-label': '行情抽屉', title: '行情抽屉',
-        onClick: () => (actions.openMarket ? actions.openMarket() : actions.openPanel('market')),
+        type: 'button', className: 'bt-icon-btn bt-head-side', 'aria-label': '行情中心', title: '行情中心',
+        onClick: () => actions.openPanel('market'),
       }, h(MarketIcon))
       : null,
     // DSH's way into its right sidebar sits in the session header this pill replaces.
